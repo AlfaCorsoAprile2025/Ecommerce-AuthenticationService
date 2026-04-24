@@ -1,0 +1,235 @@
+openapi: 3.0.3
+info:
+  title: Identity & Auth Service
+  description: Servizio per l'autenticazione, registrazione e gestione autorizzazioni (RBAC) con supporto OTP.
+  version: 1.2.0
+
+tags:
+  - name: Autenticazione
+    description: Registrazione, Login, Logout e Verifica OTP.
+  - name: Gestione Ruoli
+    description: Operazioni per la visualizzazione e verifica dei permessi utente.
+
+servers:
+  - url: http://localhost:8083/auth
+    description: Server di autenticazione locale
+
+paths:
+  /register:
+    post:
+      tags:
+        - Autenticazione
+      summary: Registra un nuovo utente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistration'
+      responses:
+        '201':
+          description: Utente registrato con successo.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /login:
+    post:
+      tags:
+        - Autenticazione
+      summary: Login utente
+      description: login utente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login effettuato (senza OTP richiesto).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '202':
+          description: Login parziale. È richiesta la verifica OTP.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tempToken: { type: string, description: "Token temporaneo per chiamare l'endpoint OTP" }
+                  method: { type: string, example: "email", description: "Metodo di invio dell'OTP" }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # --- VERIFICA OTP ---
+  /verify-otp:
+    post:
+      tags:
+        - Autenticazione
+      summary: Verifica il codice OTP
+      description: Valida il codice inviato all'utente e rilascia il token JWT definitivo.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, otpCode]
+              properties:
+                userId: { type: string, format: uuid }
+                otpCode: { type: string, example: "123456", minLength: 6, maxLength: 6 }
+                tempToken: { type: string, description: "Il token ottenuto dalla risposta 202 del login" }
+      responses:
+        '200':
+          description: OTP corretto, restituisce il token finale.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: OTP scaduto o formato errato.
+        '401':
+          description: OTP non valido.
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # --- LOGOUT ---
+  /logout:
+    post:
+      tags:
+        - Autenticazione
+      summary: Logout utente
+      security:
+        - Auth: []
+      responses:
+        '204':
+          description: Sessione chiusa.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # --- RUOLI ---
+  /roles/{userId}:
+    get:
+      tags:
+        - Gestione Ruoli
+      summary: Ottieni i ruoli di un utente specifico
+      security:
+        - Auth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Ruoli recuperati con successo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRolesResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    Auth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Dati non validi.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Conflict:
+      description: Mail già utilizzata.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthorized:
+      description: Autenticazione fallita.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: Permessi insufficienti.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    InternalError:
+      description: Errore del server.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        code: { type: string, example: "AUTH_ERROR" }
+        message: { type: string, example: "Messaggio di errore esplicativo" }
+
+    UserRegistration:
+      type: object
+      required: [email, password, firstName, lastName]
+      properties:
+        email: 
+          type: string
+          format: email
+          example: "mario.rossi@provider.it"
+        password: 
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 32
+          # Regex: Maiuscola, minuscola, numero e carattere speciale
+          pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
+          description: "La password deve contenere almeno una maiuscola, una minuscola, un numero e un carattere speciale."
+        firstName: 
+          type: string
+          example: "Mario"
+        lastName: 
+          type: string
+          example: "Rossi"    
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+        rememberMe: { type: boolean, default: false }
+
+    AuthResponse:
+      type: object
+      properties:
+        accessToken: { type: string, example: "eyJhbGci..." }
+        tokenType: { type: string, example: "Bearer" }
+        expiresIn: { type: integer, example: 3600 }
+        userId: { type: string, format: uuid }
+        roles: { type: array, items: { type: string }, example: ["USER"] }
+
+    UserRolesResponse:
+      type: object
+      properties:
+        userId: { type: string, format: uuid }
+        email: { type: string, format: email }
+        roles:
+          type: array
+          items:
+            type: string
+            example: ["ADMIN"]
