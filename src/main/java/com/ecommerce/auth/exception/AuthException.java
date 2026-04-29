@@ -54,4 +54,25 @@ public class AuthException extends RuntimeException {
             super(message, HttpStatus.NOT_FOUND);
         }
     }
+
+    /** Account registrato ma in attesa di verifica OTP. → 403 Forbidden */
+    public static class AccountNotActivatedException extends AuthException {
+        public AccountNotActivatedException() {
+            super("Account non attivato. Controlla la tua email e inserisci il codice OTP.", HttpStatus.FORBIDDEN);
+        }
+    }
+
+    /** OTP non valido o già utilizzato. → 400 Bad Request */
+    public static class InvalidOtpException extends AuthException {
+        public InvalidOtpException() {
+            super("Codice OTP non valido.", HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    /** OTP scaduto (TTL 5 minuti). → 400 Bad Request */
+    public static class OtpExpiredException extends AuthException {
+        public OtpExpiredException() {
+            super("Codice OTP scaduto. Richiedi una nuova registrazione.", HttpStatus.BAD_REQUEST);
+        }
+    }
 }

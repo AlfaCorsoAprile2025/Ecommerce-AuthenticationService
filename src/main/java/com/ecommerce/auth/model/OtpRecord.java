@@ -9,28 +9,26 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document("credentials")
-public class Credentials {
+@Document("otp_records")
+public class OtpRecord {
 
     @Id
     private String id;
 
+    private String credentialId;
+
+    /** Indice unico: un solo OTP attivo per email. */
     @Indexed(unique = true)
     private String email;
 
-    private String passwordHash;
-    private List<String> roles;
+    /** OTP hashato con SHA-256 — mai memorizzato in chiaro. */
+    private String otpHash;
 
-    /** Stato dell'account: PENDING_VERIFICATION fino alla verifica OTP, poi ACTIVE. */
-    @Builder.Default
-    private AccountStatus status = AccountStatus.PENDING_VERIFICATION;
-
+    private LocalDateTime expiresAt;
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 }

@@ -95,6 +95,25 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+        <!-- ===== R2DBC + H2 (user_roles — tabella RBAC) ===== -->
+        <!-- spring-boot-starter-data-r2dbc: abilita R2dbcRepository e autoconfigure -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-r2dbc</artifactId>
+        </dependency>
+        <!-- H2 in-memory: database relazionale leggero per sviluppo -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <!-- r2dbc-h2: driver R2DBC per H2 -->
+        <dependency>
+            <groupId>io.r2dbc</groupId>
+            <artifactId>r2dbc-h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- ===== TEST ===== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

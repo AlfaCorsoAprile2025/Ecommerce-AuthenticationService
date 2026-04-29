@@ -40,6 +40,10 @@ public class SecurityConfig {
                         // Endpoint pubblici — accessibili senza token
                         .pathMatchers(HttpMethod.POST, "/auth/hash-password").permitAll()
                         .pathMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                        .pathMatchers(HttpMethod.POST, "/auth/register").permitAll()
+                        .pathMatchers(HttpMethod.POST, "/auth/verify-otp").permitAll()
+                        // validate-token è chiamato dall'API Gateway, non dai client finali
+                        .pathMatchers(HttpMethod.POST, "/auth/validate-token").permitAll()
                         // Actuator health — accessibile per health check del cluster
                         .pathMatchers("/actuator/health").permitAll()
                         // Tutto il resto richiede autenticazione

@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.ecommerce.auth.service.AuthorizationServiceTest
 -------------------------------------------------------------------------------
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.468 s -- in com.ecommerce.auth.service.AuthorizationServiceTest
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.655 s -- in com.ecommerce.auth.service.AuthorizationServiceTest

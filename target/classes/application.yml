@@ -8,12 +8,23 @@ spring:
   # ===== MongoDB Reactive =====
   data:
     mongodb:
-      host: ${MONGO_HOST:localhost}
+      host: ${MONGO_HOST:riqualificazioneamati2026-storage}
       port: ${MONGO_PORT:27017}
       database: ${MONGO_DB:Authentication}
       username: ${MONGO_USER:admin}
       password: ${MONGO_PASSWORD:password}
       authentication-database: admin
+
+  # ===== R2DBC / H2 (user_roles — RBAC) =====
+  # DB_CLOSE_DELAY=-1 mantiene il DB in-memory vivo per tutta la JVM
+  r2dbc:
+    url: r2dbc:h2:mem:///authdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+
+  sql:
+    init:
+      mode: always
 
   # ===== RabbitMQ =====
   rabbitmq:

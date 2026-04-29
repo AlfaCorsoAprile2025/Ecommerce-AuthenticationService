@@ -1,6 +1,5 @@
 package com.ecommerce.auth.repository;
 
-import com.ecommerce.auth.model.Credentials;
 import com.ecommerce.auth.model.Login_audit;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import reactor.core.publisher.Mono;
@@ -12,7 +11,5 @@ public interface Login_auditRepository extends ReactiveMongoRepository<Login_aud
 
     Mono<Boolean> existsByEmail(String email);
 
-    Mono<Credentials> save(Login_audit login_audit);
-
-
+    // save(Login_audit) è ereditato da ReactiveMongoRepository con return type Mono<Login_audit>
 }
