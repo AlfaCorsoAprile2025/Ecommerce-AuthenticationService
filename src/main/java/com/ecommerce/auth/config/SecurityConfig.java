@@ -44,6 +44,9 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.POST, "/auth/verify-otp").permitAll()
                         // validate-token è chiamato dall'API Gateway, non dai client finali
                         .pathMatchers(HttpMethod.POST, "/auth/validate-token").permitAll()
+                        // validate è chiamato da Nginx auth_request — porta il Bearer token come header,
+                        // la validazione avviene dentro PermissionService, non nel filtro JWT
+                        .pathMatchers(HttpMethod.GET, "/auth/validate").permitAll()
                         // Actuator health — accessibile per health check del cluster
                         .pathMatchers("/actuator/health").permitAll()
                         // Tutto il resto richiede autenticazione

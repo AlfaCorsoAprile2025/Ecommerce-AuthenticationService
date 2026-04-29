@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * UserRole — Associazione credentials ↔ ruolo RBAC.
@@ -17,12 +17,12 @@ import org.springframework.data.relational.core.mapping.Table;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table("user_roles")
+@Document("user_roles")
 public class UserRole {
 
     /** PK surrogata — generata dal DB, non usata dalla logica applicativa. */
     @Id
-    private Long id;
+    private String id;
 
     /** FK logica verso Credentials._id in MongoDB. */
     private String credentialId;

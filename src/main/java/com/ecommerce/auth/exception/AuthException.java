@@ -75,4 +75,11 @@ public class AuthException extends RuntimeException {
             super("Codice OTP scaduto. Richiedi una nuova registrazione.", HttpStatus.BAD_REQUEST);
         }
     }
+
+    /** Ruolo insufficiente per l'operazione richiesta. → 403 Forbidden */
+    public static class AccessDeniedException extends AuthException {
+        public AccessDeniedException(String message) {
+            super(message, HttpStatus.FORBIDDEN);
+        }
+    }
 }
