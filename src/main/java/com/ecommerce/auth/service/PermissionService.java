@@ -11,6 +11,7 @@ import org.springframework.http.server.PathContainer;
 import org.springframework.web.util.pattern.PathPatternParser;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.util.List;
 
 @Slf4j
@@ -39,13 +40,16 @@ public class PermissionService {
                             .findByHttpMethod(method.toUpperCase())
                             .filter(perm -> matches(perm.getUriPattern(), uri))
                             .next()
-                            .switchIfEmpty(Mono.error(new AuthException.AccessDeniedException(
-                                    "Nessuna regola definita per " + method + " " + uri)))
+                            .switchIfEmpty(Mono.defer(() -> {
+                                log.debug("[validate] Nessuna regola trovata per {} {}", method, uri);
+                                return Mono.error(new AuthException.AccessDeniedException(
+                                        "Nessuna regola definita per " + method + " " + uri));
+                            }))
                             .flatMap(perm -> {
                                 List<String> required = perm.getRequiredRoles();
                                 if (required != null && !required.isEmpty()
                                         && required.stream().noneMatch(userRoles::contains)) {
-                                    log.warn("[validate] Accesso negato userId={} roles={} → {} {}",
+                                    log.debug("[validate] Accesso negato userId={} roles={} → {} {}",
                                             userId, userRoles, method, uri);
                                     return Mono.error(new AuthException.AccessDeniedException(
                                             "Ruolo insufficiente per " + method + " " + uri));
@@ -61,7 +65,12 @@ public class PermissionService {
 
     private boolean matches(String pattern, String uri) {
         try {
-            return patternParser.parse(pattern).matches(PathContainer.parsePath(uri));
+            String cleanUri = URI.create(uri).getPath();
+
+            return patternParser
+                    .parse(pattern)
+                    .matches(PathContainer.parsePath(cleanUri));
+
         } catch (Exception e) {
             log.debug("[validate] Pattern non valido '{}': {}", pattern, e.getMessage());
             return false;
