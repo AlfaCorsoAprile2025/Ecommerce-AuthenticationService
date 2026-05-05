@@ -32,7 +32,7 @@ spring:
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USER:guest}
     password: ${RABBITMQ_PASS:guest}
-    virtual-host: /
+    virtual-host:  /
 
 # ===== JWT Configuration =====
 # Due chiavi separate: una per tempToken (OTP flow) e una per il JWT finale.
