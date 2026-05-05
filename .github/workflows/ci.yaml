@@ -122,7 +122,7 @@ jobs:
             ${{ env.REGISTRY }}/${{ steps.repo.outputs.name }}:${{ github.sha }}
       - run: |
           for i in {1..40}; do
-            RESPONSE=$(curl -s -w "\n%{http_code}" http://localhost:8081/actuator/health || true)
+            RESPONSE=$(curl -s -w "\n%{http_code}" http://localhost:8083/actuator/health || true)
             BODY=$(echo "$RESPONSE" | head -n1)
             CODE=$(echo "$RESPONSE" | tail -n1)
 
