@@ -2,14 +2,12 @@ package com.ecommerce.auth.service;
 
 import com.ecommerce.auth.dto.*;
 import com.ecommerce.auth.exception.AuthException;
-import com.ecommerce.auth.messaging.RabbitMQPublisher;
-import com.ecommerce.auth.messaging.UserRegisteredEvent;
+import com.ecommerce.auth.messaging.AuditPublisher;
+import com.ecommerce.auth.messaging.LoginEventMessage;
 import com.ecommerce.auth.model.AccountStatus;
 import com.ecommerce.auth.model.Credentials;
-import com.ecommerce.auth.model.Login_audit;
 import com.ecommerce.auth.model.UserRole;
 import com.ecommerce.auth.repository.CredentialsRepository;
-import com.ecommerce.auth.repository.Login_auditRepository;
 import com.ecommerce.auth.repository.UserRoleRepository;
 import com.ecommerce.auth.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -28,12 +27,11 @@ import java.util.UUID;
 public class AuthorizationService {
 
     private final CredentialsRepository credentialsRepository;
-    private final Login_auditRepository login_auditRepository;
     private final TokenProvider tokenProvider;
     private final PasswordEncoder passwordEncoder;
     private final UserRoleRepository userRoleRepository;
     private final OtpService otpService;
-    private final RabbitMQPublisher rabbitMQPublisher;
+    private final AuditPublisher auditPublisher;
 
 
     // ===== REGISTRATION =====
@@ -67,19 +65,15 @@ public class AuthorizationService {
                             .flatMap(saved ->
                                     otpService.generateAndSave(saved.getId(), request.getEmail())
                                             .flatMap(otp -> {
-                                                UserRegisteredEvent event = UserRegisteredEvent.builder()
+                                                LoginEventMessage event = LoginEventMessage.builder()
                                                         .eventId(UUID.randomUUID().toString())
                                                         .occurredAt(Instant.now())
                                                         .userId(saved.getId())
                                                         .email(request.getEmail())
-                                                        .firstName(request.getFirstName())
-                                                        .lastName(request.getLastName())
-                                                        .initialRole("USER")
-                                                        .otpCode(otp)
                                                         .build();
 
                                                 // Fire-and-forget: RabbitMQ non bloccante sulla registrazione
-                                                return rabbitMQPublisher.publishUserRegistered(event)
+                                                return auditPublisher.publishLoginEvent(event)
                                                         .onErrorResume(e -> Mono.empty());
                                             })
                             )
@@ -122,30 +116,52 @@ public class AuthorizationService {
         return credentialsRepository.findByEmail(request.getEmail())
                 .switchIfEmpty(Mono.error(new AuthException.InvalidCredentialsException()))
                 .flatMap(credentials -> {
+                    // 1. Controllo stato account
                     if (credentials.getStatus() == AccountStatus.PENDING_VERIFICATION) {
                         return Mono.error(new AuthException.AccountNotActivatedException());
                     }
+
+                    // 2. Verifica password
                     return Mono.fromCallable(() ->
-                            passwordEncoder.matches(request.getPassword(), credentials.getPasswordHash())
-                    ).flatMap(matches -> {
-                        Login_audit audit = Login_audit.builder()
-                                .email(request.getEmail())
-                                .successful(matches)
-                                .timeStamp(LocalDateTime.now())
-                                .build();
-                        if (!matches) {
-                            log.warn("[login] Password errata per: {}", request.getEmail());
-                            return login_auditRepository.save(audit)
-                                    .onErrorResume(e -> Mono.empty())
-                                    .then(Mono.error(new AuthException.InvalidCredentialsException()));
-                        }
-                        return login_auditRepository.save(audit)
-                                .onErrorResume(e -> Mono.empty())
-                                .then(buildLoginResponse(credentials));
-                    });
+                                    passwordEncoder.matches(request.getPassword(), credentials.getPasswordHash())
+                            )
+                            .subscribeOn(Schedulers.boundedElastic())
+                            .flatMap(matches -> {
+                                // 3. Persistenza Audit (o pubblicazione evento)
+                                return auditPublisher.publishLoginEvent(buildAuditMessage(credentials, matches))
+                                        .then(Mono.just(matches));
+                            })
+                            .flatMap(matches -> {
+                                // 4. Gestione esito verifica
+                                if (!matches) {
+                                    return Mono.error(new AuthException.InvalidCredentialsException());
+                                }
+
+                                // 5. Generazione Token e costruzione risposta
+                                return tokenProvider.generateAccessToken(credentials.getId(), credentials.getRoles())
+                                        .map(token -> AuthResponse.builder()
+                                                .accessToken(token)
+                                                .tokenType("Bearer")
+                                                .expiresIn(3600L)
+                                                .userId(credentials.getId())
+                                                .roles(credentials.getRoles())
+                                                .build()
+                                        );
+                            });
                 });
     }
 
+    // Metodo helper per pulizia
+    private LoginEventMessage buildAuditMessage(Credentials credentials, boolean matches) {
+        return LoginEventMessage.builder()
+                .email(credentials.getEmail())
+                .eventType("login")
+                .successful(matches)
+                .userId(credentials.getId())
+                .occurredAt(Instant.now())
+                .eventId(UUID.randomUUID().toString())
+                .build();
+    }
     private Mono<AuthResponse> buildLoginResponse(Credentials credentials) {
         String userId = credentials.getId();
         return userRoleRepository.findByCredentialId(userId)

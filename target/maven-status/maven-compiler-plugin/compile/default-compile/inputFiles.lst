@@ -1,11 +1,10 @@
-C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\messaging\RabbitMQPublisher.java
 C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\model\AccountStatus.java
 C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\model\UserRole.java
-C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\messaging\UserRegisteredEvent.java
 C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\exception\GlobalExceptionHandler.java
 C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\model\RoutePermission.java
 C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\model\OtpRecord.java
 C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\service\AuthorizationService.java
+C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\messaging\LoginEventMessage.java
 C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\dto\LoginRequest.java
 C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\service\OtpService.java
 C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\dto\OtpVerificationRequest.java
@@ -16,11 +15,9 @@ C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI
 C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\controller\AuthController.java
 C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\dto\RegisterRequest.java
 C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\security\JwtAuthenticationFilter.java
-C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\repository\Login_auditRepository.java
 C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\config\MessagingProperties.java
 C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\dto\AuthContext.java
 C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\dto\TokenValidationResponse.java
-C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\model\Login_audit.java
 C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\model\Credentials.java
 C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\dto\TokenValidationRequest.java
 C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\repository\OtpRepository.java
@@ -31,3 +28,4 @@ C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI
 C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\dto\AuthResponse.java
 C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\service\PermissionService.java
 C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\config\SecurityConfig.java
+C:\Users\d.amati\Desktop\Lezioni Alfa\biblioteca\Progetto_riqualificazione_AMATI2026\Ecommerce-AuthenticationService\src\main\java\com\ecommerce\auth\messaging\AuditPublisher.java

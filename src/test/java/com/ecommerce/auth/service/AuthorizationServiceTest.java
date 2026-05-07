@@ -3,13 +3,11 @@ package com.ecommerce.auth.service;
 import com.ecommerce.auth.config.JwtProperties;
 import com.ecommerce.auth.dto.LoginRequest;
 import com.ecommerce.auth.exception.AuthException;
-import com.ecommerce.auth.messaging.RabbitMQPublisher;
+import com.ecommerce.auth.messaging.AuditPublisher;
+import com.ecommerce.auth.messaging.LoginEventMessage;
 import com.ecommerce.auth.model.AccountStatus;
 import com.ecommerce.auth.model.Credentials;
-import com.ecommerce.auth.model.Login_audit;
-import com.ecommerce.auth.model.UserRole;
 import com.ecommerce.auth.repository.CredentialsRepository;
-import com.ecommerce.auth.repository.Login_auditRepository;
 import com.ecommerce.auth.repository.UserRoleRepository;
 import com.ecommerce.auth.security.TokenProvider;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,7 +18,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -35,10 +32,9 @@ import static org.mockito.Mockito.when;
 class AuthorizationServiceTest {
 
     @Mock private CredentialsRepository credentialsRepository;
-    @Mock private Login_auditRepository login_auditRepository;
+    @Mock private AuditPublisher auditPublisher;
     @Mock private UserRoleRepository userRoleRepository;
     private OtpService otpService;
-    private RabbitMQPublisher rabbitMQPublisher;
 
     private AuthorizationService authService;
     private TokenProvider tokenProvider;
@@ -61,8 +57,7 @@ class AuthorizationServiceTest {
         tokenProvider = new TokenProvider(jwtProperties);
 
         authService = new AuthorizationService(
-                credentialsRepository, login_auditRepository,
-                tokenProvider, passwordEncoder, userRoleRepository, otpService, rabbitMQPublisher
+                credentialsRepository, tokenProvider, passwordEncoder, userRoleRepository, otpService, auditPublisher
         );
     }
 
@@ -80,13 +75,12 @@ class AuthorizationServiceTest {
                 .id(USER_ID).email(EMAIL)
                 .passwordHash(passwordEncoder.encode(RAW_PASSWORD))
                 .status(AccountStatus.ACTIVE)
+                .roles(List.of("USER"))
                 .build();
 
         when(credentialsRepository.findByEmail(EMAIL)).thenReturn(Mono.just(credentials));
-        when(login_auditRepository.save(any(Login_audit.class)))
-                .thenReturn(Mono.just(Login_audit.builder().build()));
-        when(userRoleRepository.findByCredentialId(USER_ID))
-                .thenReturn(Flux.just(UserRole.builder().credentialId(USER_ID).role("USER").build()));
+        when(auditPublisher.publishLoginEvent(any(LoginEventMessage.class)))
+                .thenReturn(Mono.empty());
 
         StepVerifier.create(authService.login(request))
                 .assertNext(auth -> {
@@ -111,8 +105,8 @@ class AuthorizationServiceTest {
                 .build();
 
         when(credentialsRepository.findByEmail(EMAIL)).thenReturn(Mono.just(credentials));
-        when(login_auditRepository.save(any(Login_audit.class)))
-                .thenReturn(Mono.just(Login_audit.builder().build()));
+        when(auditPublisher.publishLoginEvent(any(LoginEventMessage.class)))
+                .thenReturn(Mono.empty());
 
         StepVerifier.create(authService.login(request))
                 .expectError(AuthException.InvalidCredentialsException.class)
