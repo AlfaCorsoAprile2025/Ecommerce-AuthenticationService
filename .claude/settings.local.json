@@ -3,7 +3,15 @@
     "allow": [
       "Bash(mvn compile *)",
       "Bash(mvn test *)",
-      "Bash(mvn test-compile *)"
+      "Bash(mvn test-compile *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\d.amati\\\\Desktop\\\\Lezioni Alfa\\\\biblioteca\\\\Progetto_riqualificazione_AMATI2026\\\\Ecommerce-AuthenticationService\" -Recurse -File -Filter \"*.java\")",
+      "Bash(Select-Object FullName)",
+      "Bash(Sort-Object FullName)",
+      "Bash(Remove-Item \"C:\\\\Users\\\\d.amati\\\\Desktop\\\\Lezioni Alfa\\\\biblioteca\\\\Progetto_riqualificazione_AMATI2026\\\\Ecommerce-AuthenticationService\\\\src\\\\main\\\\java\\\\com\\\\ecommerce\\\\auth\\\\model\\\\OtpRecord.java\" -Force)",
+      "Bash(Remove-Item \"C:\\\\Users\\\\d.amati\\\\Desktop\\\\Lezioni Alfa\\\\biblioteca\\\\Progetto_riqualificazione_AMATI2026\\\\Ecommerce-AuthenticationService\\\\src\\\\main\\\\java\\\\com\\\\ecommerce\\\\auth\\\\repository\\\\OtpRepository.java\" -Force)",
+      "Bash(Write-Output \"Done\")",
+      "PowerShell(Remove-Item *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\d.amati\\\\Desktop\\\\Lezioni Alfa\\\\biblioteca\\\\Progetto_riqualificazione_AMATI2026\\\\Ecommerce-frontend\" -Recurse -File)"
     ]
   }
 }

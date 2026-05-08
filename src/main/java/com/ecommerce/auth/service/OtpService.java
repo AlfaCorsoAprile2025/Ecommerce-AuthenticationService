@@ -1,11 +1,10 @@
 package com.ecommerce.auth.service;
 
 import com.ecommerce.auth.exception.AuthException;
-import com.ecommerce.auth.model.OtpRecord;
-import com.ecommerce.auth.repository.OtpRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -14,8 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import java.time.Duration;
 import java.util.Base64;
 
 @Slf4j
@@ -23,7 +21,7 @@ import java.util.Base64;
 @RequiredArgsConstructor
 public class OtpService {
 
-    private final OtpRepository otpRepository;
+    private final ReactiveStringRedisTemplate redisTemplate;
 
     @Value("${otp.expiration-ms:300000}")
     private long expirationMs;
@@ -33,52 +31,32 @@ public class OtpService {
 
     private final SecureRandom secureRandom = new SecureRandom();
 
-    /**
-     * Genera un OTP a N cifre, lo hasha con SHA-256, lo salva e ritorna il codice in chiaro
-     * (necessario per includerlo nell'evento destinato al mailing service).
-     */
     public Mono<String> generateAndSave(String credentialId, String email) {
         int bound = (int) Math.pow(10, otpLength);
         String otp = String.format("%0" + otpLength + "d", secureRandom.nextInt(bound));
         String otpHash = hashSha256(otp);
-        LocalDateTime now = LocalDateTime.now();
+        String key = "otp:" + email;
 
-        OtpRecord record = OtpRecord.builder()
-                .credentialId(credentialId)
-                .email(email)
-                .otpHash(otpHash)
-                .createdAt(now)
-                .expiresAt(now.plus(expirationMs, ChronoUnit.MILLIS))
-                .build();
-
-        // Rimuove l'OTP precedente (se esiste) prima di salvarne uno nuovo
-        return otpRepository.deleteByEmail(email)
-                .then(otpRepository.save(record))
+        return redisTemplate.opsForValue()
+                .set(key, otpHash, Duration.ofMillis(expirationMs))
                 .doOnSuccess(r -> log.debug("[OTP] Salvato per email={}", email))
                 .thenReturn(otp);
     }
 
-    /**
-     * Valida l'OTP sottomesso dall'utente.
-     * Cancella il record in caso di successo (monouso) o scadenza.
-     */
     public Mono<Void> validate(String email, String submittedOtp) {
-        return otpRepository.findByEmail(email)
+        String key = "otp:" + email;
+        return redisTemplate.opsForValue().get(key)
                 .switchIfEmpty(Mono.error(new AuthException.InvalidOtpException()))
-                .flatMap(record -> {
-                    if (record.getExpiresAt().isBefore(LocalDateTime.now())) {
-                        return otpRepository.deleteById(record.getId())
-                                .then(Mono.error(new AuthException.OtpExpiredException()));
-                    }
-                    return Mono.fromCallable(() -> hashSha256(submittedOtp))
-                            .subscribeOn(Schedulers.boundedElastic())
-                            .flatMap(submittedHash -> {
-                                if (!submittedHash.equals(record.getOtpHash())) {
-                                    return Mono.error(new AuthException.InvalidOtpException());
-                                }
-                                return otpRepository.deleteById(record.getId());
-                            });
-                })
+                .flatMap(storedHash ->
+                        Mono.fromCallable(() -> hashSha256(submittedOtp))
+                                .subscribeOn(Schedulers.boundedElastic())
+                                .flatMap(submittedHash -> {
+                                    if (!submittedHash.equals(storedHash)) {
+                                        return Mono.error(new AuthException.InvalidOtpException());
+                                    }
+                                    return redisTemplate.delete(key).then();
+                                })
+                )
                 .then();
     }
 

@@ -4,6 +4,8 @@ import com.ecommerce.auth.dto.*;
 import com.ecommerce.auth.exception.AuthException;
 import com.ecommerce.auth.messaging.AuditPublisher;
 import com.ecommerce.auth.messaging.LoginEventMessage;
+import com.ecommerce.auth.messaging.MailPublisher;
+import com.ecommerce.auth.messaging.RegisterEventMessage;
 import com.ecommerce.auth.model.AccountStatus;
 import com.ecommerce.auth.model.Credentials;
 import com.ecommerce.auth.model.UserRole;
@@ -12,6 +14,7 @@ import com.ecommerce.auth.repository.UserRoleRepository;
 import com.ecommerce.auth.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cglib.core.Local;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -32,6 +35,7 @@ public class AuthorizationService {
     private final UserRoleRepository userRoleRepository;
     private final OtpService otpService;
     private final AuditPublisher auditPublisher;
+    private final MailPublisher mailPublisher;
 
 
     // ===== REGISTRATION =====
@@ -65,16 +69,24 @@ public class AuthorizationService {
                             .flatMap(saved ->
                                     otpService.generateAndSave(saved.getId(), request.getEmail())
                                             .flatMap(otp -> {
-                                                LoginEventMessage event = LoginEventMessage.builder()
+                                                LoginEventMessage auditEvent = LoginEventMessage.builder()
                                                         .eventId(UUID.randomUUID().toString())
                                                         .occurredAt(Instant.now())
                                                         .userId(saved.getId())
                                                         .email(request.getEmail())
                                                         .build();
 
-                                                // Fire-and-forget: RabbitMQ non bloccante sulla registrazione
-                                                return auditPublisher.publishLoginEvent(event)
-                                                        .onErrorResume(e -> Mono.empty());
+                                                RegisterEventMessage mailEvent = RegisterEventMessage.builder()
+                                                        .eventId(UUID.randomUUID().toString())
+                                                        .email(request.getEmail())
+                                                        .otp(otp)
+                                                        .occurredAt(Instant.now())
+                                                        .build();
+
+                                                return Mono.when(
+                                                        auditPublisher.publishLoginEvent(auditEvent).onErrorResume(e -> Mono.empty()),
+                                                        mailPublisher.publishOtpEvent(mailEvent).onErrorResume(e -> Mono.empty())
+                                                );
                                             })
                             )
                             .doOnSuccess(v -> log.info("[register] Utente in attesa di verifica: {}", request.getEmail()))
@@ -138,15 +150,7 @@ public class AuthorizationService {
                                 }
 
                                 // 5. Generazione Token e costruzione risposta
-                                return tokenProvider.generateAccessToken(credentials.getId(), credentials.getRoles())
-                                        .map(token -> AuthResponse.builder()
-                                                .accessToken(token)
-                                                .tokenType("Bearer")
-                                                .expiresIn(3600L)
-                                                .userId(credentials.getId())
-                                                .roles(credentials.getRoles())
-                                                .build()
-                                        );
+                                return buildLoginResponse(credentials);
                             });
                 });
     }

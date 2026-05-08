@@ -36,6 +36,9 @@ public class RabbitMQConfig {
     @Value("${messaging.rabbitmq.exchange:ecommerce.events}")
     private String exchange;
 
+    @Value("${messaging.rabbitmq.mail-exchange:ecommerce.mail}")
+    private String mailExchange;
+
     @Bean
     public Mono<Connection> rabbitConnection() {
         ConnectionFactory cf = new ConnectionFactory();
@@ -65,6 +68,8 @@ public class RabbitMQConfig {
         return args -> sender
                 .declareExchange(ExchangeSpecification.exchange(exchange).type("topic").durable(true))
                 .doOnSuccess(r -> log.info("[RabbitMQ] Exchange dichiarato: {}", exchange))
+                .then(sender.declareExchange(ExchangeSpecification.exchange(mailExchange).type("topic").durable(true)))
+                .doOnSuccess(r -> log.info("[RabbitMQ] Exchange dichiarato: {}", mailExchange))
                 .doOnError(e -> log.error("[RabbitMQ] Errore dichiarazione exchange: {}", e.getMessage()))
                 .block();
     }

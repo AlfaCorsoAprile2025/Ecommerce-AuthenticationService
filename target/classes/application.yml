@@ -7,6 +7,10 @@ spring:
 
   # ===== MongoDB Reactive =====
   data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
     mongodb:
       host: ${MONGO_HOST:riqualificazioneamati2026-storage}
       port: ${MONGO_PORT:27017}
@@ -51,6 +55,7 @@ otp:
 messaging:
   rabbitmq:
     exchange: ecommerce.events
+    mail-exchange: ecommerce.mail
     routing-keys:
       user-registered: user.registered
       user-logout: user.logout

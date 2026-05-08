@@ -39,6 +39,12 @@
             <artifactId>spring-boot-starter-data-mongodb-reactive</artifactId>
         </dependency>
 
+        <!-- Redis Reattivo: ReactiveStringRedisTemplate per storage OTP con TTL nativo -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
+        </dependency>
+
         <!-- ===== SECURITY ===== -->
         <!-- Spring Security Reactive: SecurityWebFilterChain non-bloccante -->
         <dependency>

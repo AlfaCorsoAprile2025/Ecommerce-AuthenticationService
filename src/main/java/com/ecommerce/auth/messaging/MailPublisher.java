@@ -1,5 +1,6 @@
 package com.ecommerce.auth.messaging;
 
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.AMQP;
 import lombok.RequiredArgsConstructor;
@@ -11,41 +12,33 @@ import reactor.core.scheduler.Schedulers;
 import reactor.rabbitmq.OutboundMessage;
 import reactor.rabbitmq.Sender;
 
-import java.time.Instant;
-import java.util.UUID;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AuditPublisher {
+public class MailPublisher {
 
     private final Sender sender;
     private final ObjectMapper objectMapper;
 
-    @Value("${messaging.rabbitmq.exchange:ecommerce.events}")
+    @Value("${messaging.rabbitmq.mail-exchange:ecommerce.mail}")
     private String exchange;
 
-    /**
-     * Pubblica un evento prodotto sull'exchange topic.
-     * Routing key: product.{operation lowercase} (es: product.created → audit.product via binding product.*)
-     * L'errore non propaga al chiamante: l'audit è fire-and-forget rispetto al flusso principale.
-     */
-    public Mono<Void> publishLoginEvent(LoginEventMessage loginEventMessage) {
+    public Mono<Void> publishOtpEvent(RegisterEventMessage registerEventMessage) {
         return Mono.fromCallable(() -> {
-                    return objectMapper.writeValueAsBytes(loginEventMessage);
+                    return objectMapper.writeValueAsBytes(registerEventMessage);
                 })
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMap(bytes -> {
-                    String routingKey = "user." + loginEventMessage.getEventType();
+                    String routingKey = "email.register";
                     AMQP.BasicProperties props = new AMQP.BasicProperties.Builder()
                             .contentType("application/json")
                             .deliveryMode(2)
                             .build();
                     return sender.send(Mono.just(new OutboundMessage(exchange, routingKey, props, bytes)));
                 })
-                .doOnSuccess(v -> log.info("[AuditPublisher] operazione.{} con userId={}", loginEventMessage.getEventType().toLowerCase(), loginEventMessage.getUserId()))
+                .doOnSuccess(v -> log.info("[MAilPublisher] operazione.{} con userId={}", registerEventMessage.getEmail().toLowerCase(), registerEventMessage.getOtp()))
                 .onErrorResume(e -> {
-                    log.error("[AuditPublisher] operazione.{} con userId={}: {}", loginEventMessage.getEventType().toLowerCase(),  loginEventMessage.getUserId(), e.getMessage());
+                    log.error("[MailPublisher] operazione.{} con userId={}: {}", registerEventMessage.getEmail().toLowerCase(),  registerEventMessage.getOtp(), e.getMessage());
                     return Mono.empty();
                 });
     }

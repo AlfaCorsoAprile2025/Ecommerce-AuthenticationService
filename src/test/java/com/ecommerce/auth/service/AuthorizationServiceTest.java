@@ -5,6 +5,7 @@ import com.ecommerce.auth.dto.LoginRequest;
 import com.ecommerce.auth.exception.AuthException;
 import com.ecommerce.auth.messaging.AuditPublisher;
 import com.ecommerce.auth.messaging.LoginEventMessage;
+import com.ecommerce.auth.messaging.MailPublisher;
 import com.ecommerce.auth.model.AccountStatus;
 import com.ecommerce.auth.model.Credentials;
 import com.ecommerce.auth.repository.CredentialsRepository;
@@ -34,6 +35,7 @@ class AuthorizationServiceTest {
     @Mock private CredentialsRepository credentialsRepository;
     @Mock private AuditPublisher auditPublisher;
     @Mock private UserRoleRepository userRoleRepository;
+    @Mock private MailPublisher mailPublisher;
     private OtpService otpService;
 
     private AuthorizationService authService;
@@ -57,8 +59,9 @@ class AuthorizationServiceTest {
         tokenProvider = new TokenProvider(jwtProperties);
 
         authService = new AuthorizationService(
-                credentialsRepository, tokenProvider, passwordEncoder, userRoleRepository, otpService, auditPublisher
+                credentialsRepository, tokenProvider, passwordEncoder, userRoleRepository, otpService, auditPublisher, mailPublisher
         );
+
     }
 
 

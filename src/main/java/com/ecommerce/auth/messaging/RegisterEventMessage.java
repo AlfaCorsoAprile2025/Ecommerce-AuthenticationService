@@ -6,19 +6,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class LoginEventMessage {
+public class RegisterEventMessage {
 
     private String eventId;
-    private String userId;
     private String email;
-    /** REGISTERED | LOGIN_SUCCESS | LOGIN_FAILED | LOGOUT */
-    private String eventType;
-    private boolean successful;
+    private String otp;
     private Instant occurredAt;
 }
